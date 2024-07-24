@@ -1,0 +1,273 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+
+model Accounts {
+  id            Int                     @id @default(autoincrement())
+  userName      String?    
+  Password      String?    
+  Salt          String?    
+  isAdmin       Boolean                 @default(false)
+  RefreshTokken String?    
+  createdAt  DateTime?   @default(now())
+  updatedAt  DateTime?   @default(now())
+  BanLists      BanLists[]
+  Users         Users?
+}
+
+model Users {
+  id                                     Int            @id @default(autoincrement())
+  firstName                              String       
+  lastName                               String        
+  Avatar                                 String?  
+  Wall                                   String?
+  birthDay                               String?      
+  Sexual                                 Boolean?
+  createdAt  DateTime?   @default(now())
+  updatedAt  DateTime?   @default(now())     
+  accountId                              Int?           @unique
+  Comments                               Comments[]
+  Followers_Followers_followingIdToUsers Followers[]    @relation("Followers_followingIdToUsers")
+  Followers_Followers_folowerIdToUsers   Followers[]    @relation("Followers_folowerIdToUsers")
+  Messages_Messages_fromUserIdToUsers    Messages[]     @relation("Messages_fromUserIdToUsers")
+  Messages_Messages_toUserIdToUsers      Messages[]     @relation("Messages_toUserIdToUsers")
+  Notifies_Notifies_fromUserIdToUsers    Notifies[]     @relation("Notifies_fromUserIdToUsers")
+  Notifies_Notifies_userIdToUsers        Notifies[]     @relation("Notifies_userIdToUsers")
+  Posts                                  Posts[]
+  Reactions                              Reactions[]
+  UserProfiles                           UserProfiles[]
+  sharing                                Sharing[]
+  reply                                  cmtReply[]
+  page                                   Pages?
+  pageFollow                             pageFollow[]
+  group                                  GroupMemberShip[]
+  adminGroup                             Admin[]
+  Accounts                               Accounts?      @relation(fields: [accountId], references: [id],onDelete:Cascade , onUpdate: NoAction, map: "FK__Users__accountId__02084FDA")
+}
+
+model UserProfiles {
+  id          Int      @id @default(autoincrement())
+  Country     String?  
+  phoneNUm    String?  
+  Email       String?  
+  nickName    String?  
+  Description String?  
+  createdAt  DateTime?   @default(now())
+  updatedAt  DateTime?   @default(now())
+  userId      Int?
+  Users       Users?   @relation(fields: [userId], references: [id], onUpdate: NoAction, map: "FK__UserProfi__userI__04E4BC85")
+}
+
+model BanLists {
+  id        Int       @id @default(autoincrement())
+  createdAt  DateTime?   @default(now())
+  updatedAt  DateTime?   @default(now())
+  accountId Int?
+  Accounts  Accounts? @relation(fields: [accountId], references: [id], onUpdate: NoAction, map: "FK__BanLists__accoun__25518C17")
+}
+model Pages{
+  id Int @id @default(autoincrement())
+  Pagename String
+  pageImage String
+  pagesWall String
+  Description String? 
+  createdAt  DateTime?   @default(now())
+  updatedAt  DateTime?   @default(now())
+  isLock Boolean @default(false)
+  createby Users @relation(fields: [CreateBy], references: [id])
+  CreateBy Int @unique
+  pageFollow pageFollow[]
+  post       Posts[]
+}
+model pageFollow{
+  id Int @id @default(autoincrement()) 
+  user Users? @relation(fields: [userId], references: [id])
+  userId Int @unique
+  page Pages? @relation(fields: [pageId], references: [id],onDelete: Cascade)
+  pageId Int
+}
+model Groups{
+  id Int @id @default(autoincrement()) 
+  isLock Boolean @default(false)
+  groupImage String
+  groupWall String
+  Description String? 
+  createdAt  DateTime?   @default(now())
+  updatedAt  DateTime?   @default(now())
+  groupName String
+  groupmember GroupMemberShip[]
+  admingroup  Admin[]
+  post        Posts[]
+}
+model GroupMemberShip{
+  id Int @id @default(autoincrement())
+  isAccept Boolean @default(false)
+  isBan Boolean @default(false)
+  user Users? @relation(fields: [userId],references: [id])
+  userId Int
+  group Groups? @relation(fields: [groupId],references: [id],onDelete: Cascade)
+  groupId Int 
+}
+model Admin{
+  AdminType Int
+  user Users @relation(fields: [userId],references: [id])
+  userId Int 
+  group Groups @relation(fields: [groupId],references: [id],onDelete: Cascade)
+  groupId Int
+  @@id([userId,groupId]) 
+  @@unique([userId,groupId])
+
+}
+
+model Followers {
+  id                                 Int      @id @default(autoincrement())
+  folowerId                          Int?
+  followingId                        Int?
+  createdAt  DateTime?   @default(now())
+  updatedAt  DateTime?   @default(now())
+  Users_Followers_followingIdToUsers Users?   @relation("Followers_followingIdToUsers", fields: [followingId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK__Followers__follo__08B54D69")
+  Users_Followers_folowerIdToUsers   Users?   @relation("Followers_folowerIdToUsers", fields: [folowerId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK__Followers__folow__07C12930")
+}
+
+model Messages {
+  id                               Int      @id @default(autoincrement())
+  messageText                      String?  
+  messMedia                        String?
+  createdAt  DateTime?   @default(now())
+  updatedAt  DateTime?   @default(now())
+  fromUserId                       Int?
+  toUserId                         Int?
+  Users_Messages_fromUserIdToUsers Users?   @relation("Messages_fromUserIdToUsers", fields: [fromUserId], references: [id], onUpdate: NoAction, map: "FK__Messages__fromUs__2180FB33")
+  Users_Messages_toUserIdToUsers   Users?   @relation("Messages_toUserIdToUsers", fields: [toUserId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK__Messages__toUser__22751F6C")
+}
+
+model Notifies {
+  id                               Int          @id @default(autoincrement())
+  createdAt  DateTime?   @default(now())
+  updatedAt  DateTime?   @default(now())   
+  notifyTypeId                     Int?
+  userId                           Int?
+  notiContent                      String
+  isRead                           Boolean      @default(false)
+  fromUserId                       Int?
+  Users_Notifies_fromUserIdToUsers Users?       @relation("Notifies_fromUserIdToUsers", fields: [fromUserId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK__Notifies__fromUs__41EDCAC5")
+  NotifiTypes                      NotifiTypes? @relation(fields: [notifyTypeId], references: [id], onUpdate: NoAction, map: "FK__Notifies__notify__40058253")
+  Users_Notifies_userIdToUsers     Users?       @relation("Notifies_userIdToUsers", fields: [userId], references: [id], onUpdate: NoAction, map: "FK__Notifies__userId__40F9A68C")
+}
+
+model NotifiTypes {
+  id        Int        @id @default(autoincrement())
+  notiName  String?    
+  createdAt  DateTime?   @default(now())
+  updatedAt  DateTime?   @default(now())
+  Notifies  Notifies[]
+}
+
+model Posts {
+  id         Int         @id @default(autoincrement())
+  Status     String?    
+  createdAt  DateTime?   @default(now())
+  updatedAt  DateTime?   @default(now())  
+  userId     Int
+  postTypeId Int
+  groupId Int?
+  pageId Int?
+  Comments   Comments[]
+  PostMedia  PostMedia[]
+  groupid    Groups?     @relation(fields: [groupId],references: [id],onDelete: Cascade)
+  pageid     Pages?     @relation(fields: [pageId],references: [id],onDelete: Cascade)
+  PostTypes  PostTypes?  @relation(fields: [postTypeId], references: [id], onUpdate: NoAction, map: "FK__Posts__postTypeI__14270015")
+  Users      Users?      @relation(fields: [userId], references: [id],onDelete:Cascade, onUpdate: NoAction, map: "FK__Posts__userId__1332DBDC")
+  Reactions  Reactions[]
+  sharing    Sharing[]
+}
+
+model PostTypes {
+  id        Int      @id @default(autoincrement())
+  Type      String?  
+  createdAt  DateTime?   @default(now())
+  updatedAt  DateTime?   @default(now())
+  Posts     Posts[]
+}
+
+model Reactions {
+  id        Int      @id @default(autoincrement())
+  createdAt  DateTime?   @default(now())
+  updatedAt  DateTime?   @default(now()) 
+  userId    Int?
+  postId    Int?
+  Posts     Posts?   @relation(fields: [postId], references: [id], onDelete: Cascade,onUpdate: NoAction, map: "FK__Reactions__postI__1AD3FDA4")
+  Users     Users?   @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "FK__Reactions__userI__19DFD96B")
+}
+
+model Comments {
+  id          Int      @id @default(autoincrement())
+  commentText String?  
+  createdAt  DateTime?   @default(now())
+  updatedAt  DateTime?   @default(now())
+  userId      Int?
+  postId      Int?
+  Posts       Posts?   @relation(fields: [postId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "FK__Comments__postId__1EA48E88")
+  Users       Users?   @relation(fields: [userId], references: [id], onUpdate: NoAction, map: "FK__Comments__userId__1DB06A4F")
+  reply cmtReply[]
+}
+model cmtReply{
+  id Int @id @default(autoincrement())
+  reply Comments? @relation(fields: [parentCommentId], references: [id], onDelete: Cascade)
+  parentCommentId Int
+  ById Users? @relation(fields: [ReplyById],references: [id])
+  createdAt  DateTime?   @default(now())
+  updatedAt  DateTime?   @default(now())
+  ReplyById Int
+  replyText String
+
+}
+
+model PostMedia {
+  id        Int      @id @default(autoincrement())
+  mediaFile String?  
+  createdAt  DateTime?   @default(now())
+  updatedAt  DateTime?   @default(now())
+  PostId    Int?
+  Posts     Posts?   @relation(fields: [PostId], references: [id],onDelete: Cascade, onUpdate: NoAction, map: "FK__PostMedia__PostI__17036CC0")
+}
+
+model Sharing {
+  id Int @id @default(autoincrement())
+  userId Int?
+  postId Int?
+  createdAt  DateTime?   @default(now())
+  updatedAt  DateTime?   @default(now())
+  typeId Int  @unique
+  Posts  Posts?   @relation(fields: [postId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  Users  Users?   @relation(fields: [userId], references: [id], onUpdate: NoAction)
+  shareType SharingTypes? @relation(fields: [typeId],references: [id])
+}
+model SharingTypes{
+  id Int @id @default(autoincrement())
+  createdAt  DateTime?   @default(now())
+  updatedAt  DateTime?   @default(now())
+  typeName String
+  sharing Sharing?
+}
+
+
+
+
+
+
+
+
+
